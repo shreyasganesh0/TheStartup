@@ -2,8 +2,9 @@ package main
 
 import( 
 	"fmt"
-	"os"
 	"io"
+//	"log"
+	"net"
 	"bytes"
 )
 
@@ -15,7 +16,6 @@ func getLinesChannel(f io.ReadCloser) <- chan string {
 		defer close(ch);
 		chars := make([]byte, 8);
 		tmpb := make([]byte, 0);
-		updated_before_print := 1;
 
 		for {
 			n, err := f.Read(chars);
@@ -23,17 +23,16 @@ func getLinesChannel(f io.ReadCloser) <- chan string {
 			if (n > 0) {
 
 				idx := bytes.IndexByte(chars, '\n');
+				chunk := chars[:n]
 				if (idx != -1) {
 
-					tmpb = append(tmpb, chars[:idx]...);
+					tmpb = append(tmpb, chunk[:idx]...);
 					ch <- string(tmpb)
 					tmpb = tmpb[:0];
-					tmpb = append(tmpb, chars[idx+1:]...);
-					updated_before_print = 0;
+					tmpb = append(tmpb, chunk[idx+1:]...);
 				} else {
 
-					tmpb = append(tmpb, chars...);
-					updated_before_print = 1;
+					tmpb = append(tmpb, chunk...);
 				}
 			}
 
@@ -42,7 +41,7 @@ func getLinesChannel(f io.ReadCloser) <- chan string {
 			}
 
 		}
-		if (updated_before_print == 1) {
+		if len(tmpb) > 0 {
 
 			ch <- string(tmpb);
 		}
@@ -54,18 +53,29 @@ func getLinesChannel(f io.ReadCloser) <- chan string {
 func main() {
 
 
-	fd, err := os.Open("messages.txt");
-	defer fd.Close();
+	listener, err := net.Listen("tcp4", "127.0.0.1:42069")
 	if (err != nil) {
 
-		fmt.Printf("Error opening file %z\n", err);
+		fmt.Printf("Error creating file %z\n", err);
 	}
 
-	ch := getLinesChannel(fd);
+	defer listener.Close()
+	for {
 
-	for msg := range ch {
+		tcp_conn, err_tcp := listener.Accept()
+		if (err_tcp != nil) {
 
-		fmt.Printf("read: %s\n", msg);
+			fmt.Printf("Error creating file %z\n", err_tcp);
+		}
+
+		//log.Printf("created connection %z\n", tcp_conn);
+
+		ch := getLinesChannel(tcp_conn);
+		for msg := range ch {
+
+			fmt.Printf("%s\n", msg);
+		}
+		//log.Printf("closing connection %z\n", tcp_conn);
 	}
 
 
