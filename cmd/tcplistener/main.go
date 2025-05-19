@@ -32,7 +32,7 @@ func main() {
 			fmt.Printf("Error creating file %z\n", err_tcp);
 		}
 
-		fmt.Printf("Request line:\n");
+		fmt.Printf("Request ine:\n");
 		fmt.Printf("- Method: %s\n", req.RequestLine.Method);
 		fmt.Printf("- Target: %s\n", req.RequestLine.RequestTarget);
 		fmt.Printf("- Version: %s\n", req.RequestLine.HttpVersion);
