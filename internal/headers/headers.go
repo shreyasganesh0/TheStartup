@@ -3,21 +3,26 @@ package headers
 import(
 	"fmt"
 	"bytes"
+	"strings"
 )
 
 type Headers map[string]string
 
+func NewHeaders() Headers {
+
+	return make(Headers);
+}
 
 func skip_ws(s *string) {
 
-	for i, c := range s {
+	for i, c := range *s {
 
 		if (c == ' ' || c == '\n' || c == '\t') {
 
 			continue;
 		} else {
 
-			s = s[i + 1:];
+			*s = (*s)[i:];
 			return;
 		}
 	}
@@ -27,11 +32,9 @@ func skip_ws(s *string) {
 
 func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
-	var n int = 0;
-	var done bool = false;
-	var err error;
+	done = false;
 
-	idx := bytes.Index(data, []byte('\r\n'));
+	idx := bytes.Index(data, []byte("\r\n"));
 	if (idx == -1) {
 
 		return n, done, err;
@@ -43,11 +46,15 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		return n, done, err;
 	}
 
-	s_data := string(data);
+	tmp_data := data[:idx];
+
+	s_data := string(tmp_data);
 
 	var i int;
 	var c rune;
 	var curr_s string;
+	var curr_key string;
+	var b strings.Builder;
 	for i, c = range s_data {
 
 		if (c == ':') {
@@ -57,17 +64,20 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		if (c == ' ') {
 
 			err = fmt.Errorf("Error while parsing field name found whitespace\n");
-			done = true;
 			return n, done ,err;
 		}
-		curr_s += c;
+		b.WriteRune(c);
 	}
 
+	curr_s = b.String();
 	h[curr_s] = "";
 	curr_key = curr_s;
 	curr_s = "";
+	b.Reset();
 
-	s_data = s_data[i + 1:];
+	fmt.Printf("s data before skip ws is: %s\n",s_data);
+	s_data = s_data[i + 2:];
+	fmt.Printf("s data before skip ws is: %s\n",s_data);
 	skip_ws(&s_data);
 
 	for i, c = range s_data {
@@ -75,25 +85,22 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		if (c == ' ') {
 
 			skip_ws(&s_data);
-			if (s_data[i + 1] != '\r' || s_data[i + 2] != '\n') {
+			if (len(s_data) > 0) {
 
 				err = fmt.Errorf(" Failed to parse key");
-				done = true;
 				return n, done, err;
 			} else {
 
-				done = true;
-				n = len(data);
 				break;
 			}
 		}
 
-		curr_s += c;
+		b.WriteRune(c);
 	}
 
+	curr_s = b.String();
 	h[curr_key] = curr_s;
-	n = len(data);
-	done = true;
+	n = idx + 2;
 
 	return n, done, err;
 }
