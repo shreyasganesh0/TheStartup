@@ -4,6 +4,7 @@ import(
 	"fmt"
 	"bytes"
 	"strings"
+	"unicode"
 )
 
 type Headers map[string]string
@@ -61,11 +62,14 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
 			break;
 		}
-		if (c == ' ') {
+		if (c == ' '|| !(unicode.IsUpper(c) || unicode.IsLower(c) || unicode.IsDigit(c) || c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*'|| c == '+' || c == '-' || c == '.' || c == '^' || c == '_' ||  c == '`' || c == '|' || c == '~') ) {
 
 			err = fmt.Errorf("Error while parsing field name found whitespace\n");
 			return n, done ,err;
-		}
+		} 
+
+		c = unicode.ToLower(c);
+
 		b.WriteRune(c);
 	}
 
