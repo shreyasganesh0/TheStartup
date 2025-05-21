@@ -74,7 +74,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	}
 
 	curr_s = b.String();
-	h[curr_s] = "";
+
 	curr_key = curr_s;
 	curr_s = "";
 	b.Reset();
@@ -103,8 +103,15 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	}
 
 	curr_s = b.String();
-	h[curr_key] = curr_s;
-	n = idx + 2;
+	val, exists := h[curr_key];
+	if (exists == false) {
+
+		h[curr_key] = curr_s;
+	} else {
+
+		h[curr_key] = val + ", " + curr_s;
+	}
+	n = len(tmp_data) + 2; // len of consumed bytes +2 is for the crlf
 
 	return n, done, err;
 }
