@@ -27,15 +27,20 @@ func main() {
 
 
 		req, err_req := request.RequestFromReader(tcp_conn);
-		if (err_req != nil) {
+		if (err_req == nil) {
 
-			fmt.Printf("Error creating file %z\n", err_tcp);
+			fmt.Printf("Error creating file %v\n", err_tcp);
 		}
 
-		fmt.Printf("Request ine:\n");
+		fmt.Printf("Request line:\n");
 		fmt.Printf("- Method: %s\n", req.RequestLine.Method);
 		fmt.Printf("- Target: %s\n", req.RequestLine.RequestTarget);
 		fmt.Printf("- Version: %s\n", req.RequestLine.HttpVersion);
+		fmt.Printf("Headers:\n");
+		for k, v := range req.Headers {
+
+			fmt.Printf("- %s: %s\n", k, v); 
+		}
 
 	}
 

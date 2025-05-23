@@ -79,9 +79,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	curr_s = "";
 	b.Reset();
 
-	fmt.Printf("s data before skip ws is: %s\n",s_data);
 	s_data = s_data[i + 2:];
-	fmt.Printf("s data before skip ws is: %s\n",s_data);
 	skip_ws(&s_data);
 
 	for i, c = range s_data {

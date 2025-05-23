@@ -42,8 +42,6 @@ func (r *Request) parse(data []byte) (int, error) {
 		err = fmt.Errorf("Trying to read in done state\n");
 	} else if r.state == 2 {
 
-		fmt.Printf("Sending %s to Header Parsing\n", data);
-
 		n, done, err = r.Headers.Parse(data)
 		if (done == true) {
 
@@ -121,8 +119,6 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 		if (n > 0) {
 
 			send_byts = append(send_byts, byts[:n]...);
-
-			fmt.Printf("Sending %s to Header Parsing\n", send_byts);
 		    n_sub, err_sub := r.parse(send_byts);
 			if err_sub != nil {
 
@@ -132,9 +128,7 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 
 			if n_sub > 0 {
 
-				fmt.Printf("old send %s\n", send_byts);
 				send_byts = send_byts[n_sub:]
-				fmt.Printf("New send %s\n", send_byts);
 			}
 		}
 	}
