@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"bytes"
 	"bufio"
+	"github.com/shreyasganesh0/TheStartup/internal/headers"
 )
 
 const READ_BYTES int = 8;
 
 type Request struct {
 	RequestLine RequestLine
+	Headers headers.Headers
 	state int
 }
 
@@ -25,6 +27,7 @@ func (r *Request) parse(data []byte) (int, error) {
 	var req RequestLine;
 	var err error;
 	var n int;
+	var done bool;
 
 	if r.state == 0 {
 
@@ -32,11 +35,22 @@ func (r *Request) parse(data []byte) (int, error) {
 		if n > 0 {
 
 			r.RequestLine = req;
-			r.state = 1;
+			r.state = 2; //switch to header
 		}
 	} else if r.state == 1 {
 
 		err = fmt.Errorf("Trying to read in done state\n");
+	} else if r.state == 2 {
+
+		fmt.Printf("Sending %s to Header Parsing\n", data);
+
+		n, done, err = r.Headers.Parse(data)
+		if (done == true) {
+
+			r.state = 1;
+		}
+		
+
 	} else {
 		
 		err = fmt.Errorf("Unknown state\n");
@@ -60,8 +74,8 @@ func parseRequestLine(byts []byte) (RequestLine, int, error) {
 		return req, 0, nil
 	}
 	
-	num_bytes = len(byts);
 	byts = byts[:idx];
+	num_bytes = len(byts) + 2;
 	tmps := string(byts);
 	
 	n, err = fmt.Sscanf(tmps, "%s %s HTTP/%s", &req.Method, &req.RequestTarget, &req.HttpVersion);
@@ -91,11 +105,12 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 	var n int;
 	var r Request;
 
+	r.Headers = headers.NewHeaders()
 	byts := make([]byte, READ_BYTES, READ_BYTES);
 	send_byts := make([]byte, 0);
 	buf := bufio.NewReader(reader);
 
-	for (r.state == 0) {
+	for (r.state != 1) {
 
 		n, err = buf.Read(byts);	
 		if (err == io.EOF) {
@@ -107,6 +122,7 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 
 			send_byts = append(send_byts, byts[:n]...);
 
+			fmt.Printf("Sending %s to Header Parsing\n", send_byts);
 		    n_sub, err_sub := r.parse(send_byts);
 			if err_sub != nil {
 
@@ -116,8 +132,9 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 
 			if n_sub > 0 {
 
-				send_byts = send_byts[n_sub - 1:]
-				r.state = 1
+				fmt.Printf("old send %s\n", send_byts);
+				send_byts = send_byts[n_sub:]
+				fmt.Printf("New send %s\n", send_byts);
 			}
 		}
 	}
