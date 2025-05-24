@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"bytes"
 	"bufio"
+	"strconv"
 	"github.com/shreyasganesh0/TheStartup/internal/headers"
 )
 
@@ -13,6 +14,7 @@ const READ_BYTES int = 8;
 type Request struct {
 	RequestLine RequestLine
 	Headers headers.Headers
+	Body []byte
 	state int
 }
 
@@ -45,9 +47,33 @@ func (r *Request) parse(data []byte) (int, error) {
 		n, done, err = r.Headers.Parse(data)
 		if (done == true) {
 
-			r.state = 1;
+			_, exists := r.Headers["content-length"]
+			if (exists == false) {
+				
+				r.state = 1;
+			} else {
+
+				r.state = 3;
+			}
 		}
-		
+
+	} else if r.state == 3 {
+
+		r.Body = append(r.Body, data...);
+		v, _ := r.Headers["content-length"];
+
+
+		n, err_conv := strconv.Atoi(v);
+		if err_conv != nil {
+
+			err = err_conv;
+		}
+	 	if (len(r.Body) > n) {
+
+			err = fmt.Errorf("Length %d and content length header %s dont match\n", len(r.Body), v);
+		}
+		r.state = 1
+		n = len(data)
 
 	} else {
 		
