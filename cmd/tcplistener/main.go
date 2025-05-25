@@ -27,7 +27,7 @@ func main() {
 
 
 		req, err_req := request.RequestFromReader(tcp_conn);
-		if (err_req == nil) {
+		if (err_req != nil) {
 
 			fmt.Printf("Error creating file %v\n", err_tcp);
 		}
@@ -41,6 +41,8 @@ func main() {
 
 			fmt.Printf("- %s: %s\n", k, v); 
 		}
+		fmt.Printf("Body:\n%s\n", string(req.Body));
+
 
 	}
 

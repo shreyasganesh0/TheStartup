@@ -42,6 +42,7 @@ func (r *Request) parse(data []byte) (int, error) {
 	} else if r.state == 1 {
 
 		err = fmt.Errorf("Trying to read in done state\n");
+
 	} else if r.state == 2 {
 
 		n, done, err = r.Headers.Parse(data)
@@ -59,7 +60,6 @@ func (r *Request) parse(data []byte) (int, error) {
 
 	} else if r.state == 3 {
 
-		r.Body = append(r.Body, data...);
 		v, _ := r.Headers["content-length"];
 
 
@@ -68,12 +68,19 @@ func (r *Request) parse(data []byte) (int, error) {
 
 			err = err_conv;
 		}
-	 	if (len(r.Body) > n) {
 
+		if (len(data) == n) {
+
+			r.Body = append(r.Body, data...);
+			r.state = 1
+			
+		} else if (len(data) > n){
+
+			n = 0
+			r.state = 1
 			err = fmt.Errorf("Length %d and content length header %s dont match\n", len(r.Body), v);
-		}
-		r.state = 1
-		n = len(data)
+		} 
+
 
 	} else {
 		
@@ -107,7 +114,6 @@ func parseRequestLine(byts []byte) (RequestLine, int, error) {
 
 		err = fmt.Errorf("Failed to parse line\n");
 	}
-
 
 	if (req.Method != "GET" && req.Method != "POST" && req.Method != "PUT" && req.Method != "DELETE") {
 

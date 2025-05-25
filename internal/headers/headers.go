@@ -44,6 +44,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	if (idx == 0) {
 
 		done = true;
+		n = 2
 		return n, done, err;
 	}
 
