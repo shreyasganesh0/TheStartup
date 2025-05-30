@@ -4,6 +4,7 @@ import(
 	"fmt"
 	"sync/atomic"
 	"net"
+	"github.com/shreyasganesh0/TheStartup/internal/response"
 )
 
 type Server struct {
@@ -54,8 +55,19 @@ func (s *Server) listen() {
 }
 func (s *Server) handle(conn net.Conn) {
 
-	defer conn.Close()
-	response := "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World!"
-	conn.Write([]byte(response));
+	defer conn.Close();
+	var statuscode response.StatusCode = 200
+
+	err := response.WriteStatusLine(conn, statuscode);
+	if (err != nil) {
+
+		fmt.Printf("Failed to write due to %s\n", err);
+	}
+	h := response.GetDefaultHeaders(0);
+	err = response.WriteHeaders(conn, h);
+	if (err != nil) {
+
+		fmt.Printf("Failed to write due to %s\n", err);
+	}
 	return;
 }
