@@ -68,6 +68,7 @@ func (s *Server) listen() {
 
 func WriteHError(h *HandlerError, w io.Writer) {
 
+	fmt.Printf("got stat code %v",h.StatusCode);
 	err := response.WriteStatusLine(w, h.StatusCode);
 	if (err != nil) {
 
@@ -80,7 +81,7 @@ func WriteHError(h *HandlerError, w io.Writer) {
 		fmt.Printf("Failed to write due to %s\n", err);
 	}
 	w.Write([]byte(h.Message));
-	fmt.Printf("Wrote %v\n",h.Message);
+	fmt.Printf("Wrote %v",h.Message);
 	return;
 }
 
@@ -88,11 +89,12 @@ func (s *Server) handle(conn net.Conn) {
 
 	defer conn.Close();
 	var statuscode response.StatusCode = 200
-	var buf bytes.Buffer
+	buf := bytes.NewBuffer([]byte{})
 
 	req, err_req := request.RequestFromReader(conn);
 	if (err_req != nil) {
 
+		fmt.Printf("Error found is %v\n", err_req);
 		h_e := HandlerError {
 
 			Message: "Your problem is not my problem\n",
@@ -102,9 +104,10 @@ func (s *Server) handle(conn net.Conn) {
 		return;
 	}
 
-	h_err := s.handler(&buf, req);
+	h_err := s.handler(buf, req);
 	if (h_err != nil) {
 
+		fmt.Printf("send stat code %v\n",h_err.StatusCode);
 		WriteHError(h_err, conn);
 		return;
 	}

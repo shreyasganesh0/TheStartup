@@ -12,23 +12,23 @@ import(
 
 func myhandler(w io.Writer, req *request.Request) *server.HandlerError {
 
-	var h_err server.HandlerError;
-
 	if (req.RequestLine.RequestTarget == "/yourproblem") {
 
-		h_err.Message = "Your problem is not my problem\n";
-		h_err.StatusCode = 400;
-	} else if (req.RequestLine.RequestTarget == "/myproblem") {
+		return &server.HandlerError {
+			Message: "Your problem is not my problem\n",
+			StatusCode: 400,
+		}
+	} 
+	if (req.RequestLine.RequestTarget == "/myproblem") {
 
-		h_err.Message = "Woopsie, my bad\n";
-		h_err.StatusCode = 500;
-	} else {
+		return &server.HandlerError {
+			Message: "Woopsie, my bad\n",
+			StatusCode: 500,
+		}
+	} 
 
-		w.Write([]byte("All good, frfr\n"));
-		return nil;
-	}
-
-	return &h_err;
+	w.Write([]byte("All good, frfr\n"));
+	return nil;
 }
 
 func main() {

@@ -28,18 +28,16 @@ func WriteStatusLine(w io.Writer, statuscode StatusCode) error {
 		case 400:
 
 			status_line = "HTTP/1.1 400 Bad Request\r\n";
-	
 		case 500:
 
 			status_line = "HTTP/1.1 500 Internal Server Error\r\n";
-
 		default:
 
 			return fmt.Errorf("Unsupported status code\n");
 	}
 
 	w.Write([]byte(status_line));
-	fmt.Printf("Wrote %v\n",status_line);
+	fmt.Printf("Wrote %v",status_line);
 	return nil
 } 
 
@@ -59,8 +57,9 @@ func WriteHeaders(w io.Writer, headers headers.Headers) error {
 	for k, v := range headers {
 
 		w.Write([]byte(fmt.Sprintf("%s: %s\r\n", k, v)));
-		fmt.Printf("Wrote %v\n", fmt.Sprintf("%s: %s\r\n", k, v));
+		fmt.Printf("Wrote %v", fmt.Sprintf("%s: %s\r\n", k, v));
 	}
 	w.Write([]byte("\r\n"));
+	fmt.Printf("Wrote %v", "\r\n");
 	return nil;
 }

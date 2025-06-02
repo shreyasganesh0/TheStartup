@@ -41,11 +41,14 @@ func (r *Request) parse(data []byte) (int, error) {
 		}
 	} else if r.state == 1 {
 
+		fmt.Printf("ended\n");
 		err = fmt.Errorf("Trying to read in done state\n");
 
 	} else if r.state == 2 {
+		fmt.Printf("state2 data is : %s\n",data );
 
 		n, done, err = r.Headers.Parse(data)
+		fmt.Printf("n: %v done: %v err: %v\n",n, done, err);
 		if (done == true) {
 
 			_, exists := r.Headers["content-length"]
@@ -72,14 +75,13 @@ func (r *Request) parse(data []byte) (int, error) {
 		if (len(data) == n) {
 
 			r.Body = append(r.Body, data...);
-			r.state = 1
 			
 		} else if (len(data) > n){
 
 			n = 0
-			r.state = 1
 			err = fmt.Errorf("Length %d and content length header %s dont match\n", len(r.Body), v);
 		} 
+		r.state = 1
 
 
 	} else {
@@ -148,12 +150,15 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 			r.state = 1
 			break;
 		}
+		fmt.Printf("Checking...\n");
 		if (n > 0) {
 
 			send_byts = append(send_byts, byts[:n]...);
+			fmt.Printf("Raw buffer contents: %q\n", send_byts)
 		    n_sub, err_sub := r.parse(send_byts);
 			if err_sub != nil {
 
+				fmt.Printf("Error  parsing is %v", err_sub);
 				err = err_sub;
 				break;
 			}
@@ -161,6 +166,11 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 			if n_sub > 0 {
 
 				send_byts = send_byts[n_sub:]
+				if bytes.Equal(send_byts, []byte("\r\n")) {
+
+					r.parse(send_byts);
+				}
+
 			}
 		}
 	}

@@ -110,7 +110,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
 		h[curr_key] = val + ", " + curr_s;
 	}
-	n = len(tmp_data) + 2; // len of consumed bytes +2 is for the crlf
+	n = idx+2; // len of consumed bytes +2 is for the crlf
 
 	return n, done, err;
 }
