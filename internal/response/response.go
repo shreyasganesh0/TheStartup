@@ -27,7 +27,7 @@ func WriteStatusLine(w io.Writer, statuscode StatusCode) error {
 			status_line = "HTTP/1.1 200 OK\r\n";
 		case 400:
 
-			status_line = "HTTP/1.1 400 Not Found\r\n";
+			status_line = "HTTP/1.1 400 Bad Request\r\n";
 	
 		case 500:
 
@@ -39,6 +39,7 @@ func WriteStatusLine(w io.Writer, statuscode StatusCode) error {
 	}
 
 	w.Write([]byte(status_line));
+	fmt.Printf("Wrote %v\n",status_line);
 	return nil
 } 
 
@@ -47,7 +48,7 @@ func GetDefaultHeaders(contentLen int) headers.Headers {
 	v :=strconv.Itoa(contentLen);
 	h := headers.Headers{
 			"Content-Length":  v,
-			"Connection": "closed",
+			"Connection": "close",
 			"Content-Type": "text/plain",
 		}
 	return h;
@@ -58,6 +59,7 @@ func WriteHeaders(w io.Writer, headers headers.Headers) error {
 	for k, v := range headers {
 
 		w.Write([]byte(fmt.Sprintf("%s: %s\r\n", k, v)));
+		fmt.Printf("Wrote %v\n", fmt.Sprintf("%s: %s\r\n", k, v));
 	}
 	w.Write([]byte("\r\n"));
 	return nil;
