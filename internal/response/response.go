@@ -3,7 +3,7 @@ package response
 import(
 	"strconv"
 	"fmt"
-	"io"
+	"net"
 	"github.com/shreyasganesh0/TheStartup/internal/headers"
 )
 
@@ -15,7 +15,12 @@ const (
 	StatusServerError StatusCode = 500
 )
 
-func WriteStatusLine(w io.Writer, statuscode StatusCode) error {
+type Writer struct {
+
+	Writer net.Conn
+}
+
+func (w *Writer) WriteStatusLine( statuscode StatusCode) error {
 
 
 	var status_line string
@@ -36,7 +41,7 @@ func WriteStatusLine(w io.Writer, statuscode StatusCode) error {
 			return fmt.Errorf("Unsupported status code\n");
 	}
 
-	w.Write([]byte(status_line));
+	w.Writer.Write([]byte(status_line));
 	fmt.Printf("Wrote %v",status_line);
 	return nil
 } 
@@ -47,19 +52,26 @@ func GetDefaultHeaders(contentLen int) headers.Headers {
 	h := headers.Headers{
 			"Content-Length":  v,
 			"Connection": "close",
-			"Content-Type": "text/plain",
+			"Content-Type": "text/html",
 		}
 	return h;
 }
 
-func WriteHeaders(w io.Writer, headers headers.Headers) error {
+func (w *Writer) WriteHeaders( headers headers.Headers) error {
 
 	for k, v := range headers {
 
-		w.Write([]byte(fmt.Sprintf("%s: %s\r\n", k, v)));
+		w.Writer.Write([]byte(fmt.Sprintf("%s: %s\r\n", k, v)));
 		fmt.Printf("Wrote %v", fmt.Sprintf("%s: %s\r\n", k, v));
 	}
-	w.Write([]byte("\r\n"));
+	w.Writer.Write([]byte("\r\n"));
 	fmt.Printf("Wrote %v", "\r\n");
+	return nil;
+}
+
+
+func (w *Writer) WriteBody(p []byte) error {
+
+	w.Writer.Write(p);
 	return nil;
 }

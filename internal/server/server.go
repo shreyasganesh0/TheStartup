@@ -50,6 +50,7 @@ func (s *Server) Close() error {
 	return nil;
 
 }
+
 func (s *Server) listen() {
 	for {
 
@@ -66,21 +67,21 @@ func (s *Server) listen() {
 	}
 }
 
-func WriteHError(h *HandlerError, w io.Writer) {
+func (h *HandlerError) WriteHError(w response.Writer) {
 
 	fmt.Printf("got stat code %v",h.StatusCode);
-	err := response.WriteStatusLine(w, h.StatusCode);
+	err := w.WriteStatusLine(h.StatusCode);
 	if (err != nil) {
 
 		fmt.Printf("Failed to write due to %s\n", err);
 	}
 	header := response.GetDefaultHeaders(len(h.Message));
-	err = response.WriteHeaders(w, header);
+	err = w.WriteHeaders(header);
 	if (err != nil) {
 
 		fmt.Printf("Failed to write due to %s\n", err);
 	}
-	w.Write([]byte(h.Message));
+	w.Writer.Write([]byte(h.Message));
 	fmt.Printf("Wrote %v",h.Message);
 	return;
 }
@@ -91,6 +92,9 @@ func (s *Server) handle(conn net.Conn) {
 	var statuscode response.StatusCode = 200
 	buf := bytes.NewBuffer([]byte{})
 
+	var w response.Writer
+	w.Writer = conn
+
 	req, err_req := request.RequestFromReader(conn);
 	if (err_req != nil) {
 
@@ -100,7 +104,7 @@ func (s *Server) handle(conn net.Conn) {
 			Message: "Your problem is not my problem\n",
 			StatusCode:  400,
 		}
-		WriteHError(&h_e, conn);
+		h_e.WriteHError(w);
 		return;
 	}
 
@@ -108,17 +112,17 @@ func (s *Server) handle(conn net.Conn) {
 	if (h_err != nil) {
 
 		fmt.Printf("send stat code %v\n",h_err.StatusCode);
-		WriteHError(h_err, conn);
+		h_err.WriteHError(w);
 		return;
 	}
 
-	err := response.WriteStatusLine(conn, statuscode);
+	err := w.WriteStatusLine(statuscode);
 	if (err != nil) {
 
 		fmt.Printf("Failed to write due to %s\n", err);
 	}
 	h := response.GetDefaultHeaders(buf.Len());
-	err = response.WriteHeaders(conn, h);
+	err = w.WriteHeaders(h);
 	if (err != nil) {
 
 		fmt.Printf("Failed to write due to %s\n", err);
