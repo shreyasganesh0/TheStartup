@@ -20,6 +20,52 @@ type Writer struct {
 	Writer net.Conn
 }
 
+func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
+
+	var n int
+	var err error
+	var n_tot int
+
+	n, err = fmt.Fprintf(w.Writer, "%x\r\n,", len(p));
+	if err != nil {
+
+		return n, err
+	}
+	n_tot += n;
+
+	n, err = w.Writer.Write(p);
+	if err != nil {
+
+		return n_tot, err
+	}
+	n_tot += n;
+
+	n, err = w.Writer.Write([]byte("\r\n"));
+	if err != nil {
+
+		return n_tot, err
+	}
+	n_tot += n;
+
+	return n_tot, nil;
+}
+
+func (w *Writer) WriteChunkedBodyDone() (int, error) {
+
+	var n int
+	var err error
+	var n_tot int
+
+	n, err = w.Writer.Write([]byte("0\r\n\r\n"));
+	if err != nil {
+
+		return n_tot, err
+	}
+	n_tot += n;
+
+	return n_tot, nil;
+}
+
 func (w *Writer) WriteStatusLine( statuscode StatusCode) error {
 
 

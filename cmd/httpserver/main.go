@@ -43,6 +43,20 @@ func myhandler(w io.Writer, req *request.Request) *server.HandlerError {
   </body>
 </html>`
 
+	if (strings.HasPrefix(req.RequestLine.RequestTarget, "/httpbin")) {
+
+		url := "https://httpbin.org" + strings.TrimPrefix(req.RequestLine.RequestTarget, "/httpbin");
+		req, err := http.Get(url);
+		if (err != nil) {
+
+			return &server.HandlerError {
+				Message: badreq_message, 
+				StatusCode: 400,
+			}
+		}
+
+
+	}
 	if (req.RequestLine.RequestTarget == "/yourproblem") {
 
 		return &server.HandlerError {
