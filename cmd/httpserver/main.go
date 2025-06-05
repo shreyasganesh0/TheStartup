@@ -6,12 +6,77 @@ import(
 	"syscall"
 	"os"
 	"io"
+	"strings"
+	"fmt"
+	"net/http"
+
 	"github.com/shreyasganesh0/TheStartup/internal/server"
 	"github.com/shreyasganesh0/TheStartup/internal/request"
+	"github.com/shreyasganesh0/TheStartup/internal/response"
 )
 
+func proxyHandle(url string, w *response.Writer) {
 
-func myhandler(w io.Writer, req *request.Request) *server.HandlerError {
+	var statuscode response.StatusCode = 200
+	resp, err := http.Get(url);
+	if (err != nil) {
+
+		h_err := &server.HandlerError {
+			Message: err.Error(), 
+			StatusCode: 400,
+		}
+		h_err.WriteHError(w);
+		return;
+	}
+	defer resp.Body.Close();
+	
+	buf := make([]byte,1024);
+	err = w.WriteStatusLine(statuscode);
+	if (err != nil) {
+
+		fmt.Printf("Failed to write due to %s\n", err);
+	}
+	h := response.GetDefaultHeaders(len(buf));
+	h.Remove("Content-Length");
+	h.Update("Transfer-Encoding", "chunked");
+
+	err = w.WriteHeaders(h);
+	if (err != nil) {
+
+		fmt.Printf("Failed to write due to %s\n", err);
+	}
+	for {
+
+		n, err_rd := resp.Body.Read(buf);
+		if (err_rd != nil) {
+
+			fmt.Printf("Error found while reading %v", err_rd);
+		}
+
+		if (err_rd == io.EOF) {
+
+			for {
+				_, errw := w.WriteChunkedBodyDone();
+
+				if (errw == nil) {
+
+					break;
+				}
+			}
+			break;
+		}
+
+		if (n > 0) {
+
+			_, err_w := w.WriteChunkedBody(buf);
+			if (err_w != nil) {
+				fmt.Printf("Error found while reading %v", err_w);
+			}
+		}
+	}
+}
+
+func myhandler(w *response.Writer, req *request.Request) {
 
 	var badreq_message string = `<html>
   <head>
@@ -43,37 +108,49 @@ func myhandler(w io.Writer, req *request.Request) *server.HandlerError {
   </body>
 </html>`
 
+	var h_err *server.HandlerError;
+
 	if (strings.HasPrefix(req.RequestLine.RequestTarget, "/httpbin")) {
 
 		url := "https://httpbin.org" + strings.TrimPrefix(req.RequestLine.RequestTarget, "/httpbin");
-		req, err := http.Get(url);
-		if (err != nil) {
+		proxyHandle(url, w);
+		return;
+	} else if (req.RequestLine.RequestTarget == "/yourproblem") {
 
-			return &server.HandlerError {
+		h_err = &server.HandlerError {
 				Message: badreq_message, 
 				StatusCode: 400,
 			}
-		}
+		h_err.WriteHError(w);
+		return;
+	} else if (req.RequestLine.RequestTarget == "/myproblem") {
 
-
-	}
-	if (req.RequestLine.RequestTarget == "/yourproblem") {
-
-		return &server.HandlerError {
-			Message: badreq_message, 
-			StatusCode: 400,
-		}
-	} 
-	if (req.RequestLine.RequestTarget == "/myproblem") {
-
-		return &server.HandlerError {
+		h_err = &server.HandlerError {
 			Message: serverr_message, 
 			StatusCode: 500,
 		}
+		h_err.WriteHError(w);
+		return;
 	} 
 
-	w.Write([]byte(ok_message));
-	return nil;
+//default message	
+	var statuscode response.StatusCode = 200
+	err := w.WriteStatusLine(statuscode);
+	if (err != nil) {
+
+		fmt.Printf("Failed to write due to %s\n", err);
+	}
+	h := response.GetDefaultHeaders(len(ok_message));
+	h.Update("Content-Type", "text/html")
+
+	err = w.WriteHeaders(h);
+	if (err != nil) {
+
+		fmt.Printf("Failed to write due to %s\n", err);
+	}
+
+	w.Writer.Write([]byte(ok_message));
+	return; 
 }
 
 func main() {

@@ -31,6 +31,18 @@ func skip_ws(s *string) {
 	return;
 }
 
+func (h Headers) Remove(k string) {
+
+	delete(h, k);
+	return;
+}
+
+func (h Headers) Update(k, v string) {
+
+	h[k] = v;
+	return;
+}
+
 func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
 	done = false;

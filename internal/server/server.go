@@ -3,9 +3,8 @@ package server
 import(
 	"fmt"
 	"sync/atomic"
-	"bytes"
 	"net"
-	"io"
+
 	"github.com/shreyasganesh0/TheStartup/internal/response"
 	"github.com/shreyasganesh0/TheStartup/internal/request"
 )
@@ -22,7 +21,7 @@ type HandlerError struct {
 	StatusCode response.StatusCode
 	Message string
 }
-type Handler func(w io.Writer, req *request.Request) *HandlerError
+type Handler func(w *response.Writer, req *request.Request) 
 
 func Serve(port int, h Handler) (*Server, error) {
 
@@ -67,7 +66,7 @@ func (s *Server) listen() {
 	}
 }
 
-func (h *HandlerError) WriteHError(w response.Writer) {
+func (h *HandlerError) WriteHError(w *response.Writer) {
 
 	fmt.Printf("got stat code %v",h.StatusCode);
 	err := w.WriteStatusLine(h.StatusCode);
@@ -76,6 +75,7 @@ func (h *HandlerError) WriteHError(w response.Writer) {
 		fmt.Printf("Failed to write due to %s\n", err);
 	}
 	header := response.GetDefaultHeaders(len(h.Message));
+	header.Update("Content-Type", "text/html")
 	err = w.WriteHeaders(header);
 	if (err != nil) {
 
@@ -89,8 +89,6 @@ func (h *HandlerError) WriteHError(w response.Writer) {
 func (s *Server) handle(conn net.Conn) {
 
 	defer conn.Close();
-	var statuscode response.StatusCode = 200
-	buf := bytes.NewBuffer([]byte{})
 
 	var w response.Writer
 	w.Writer = conn
@@ -104,30 +102,10 @@ func (s *Server) handle(conn net.Conn) {
 			Message: "Your problem is not my problem\n",
 			StatusCode:  400,
 		}
-		h_e.WriteHError(w);
+		h_e.WriteHError(&w);
 		return;
 	}
 
-	h_err := s.handler(buf, req);
-	if (h_err != nil) {
-
-		fmt.Printf("send stat code %v\n",h_err.StatusCode);
-		h_err.WriteHError(w);
-		return;
-	}
-
-	err := w.WriteStatusLine(statuscode);
-	if (err != nil) {
-
-		fmt.Printf("Failed to write due to %s\n", err);
-	}
-	h := response.GetDefaultHeaders(buf.Len());
-	err = w.WriteHeaders(h);
-	if (err != nil) {
-
-		fmt.Printf("Failed to write due to %s\n", err);
-	}
-
-	conn.Write(buf.Bytes());
+	s.handler(&w, req);
 	return;
 }
