@@ -94,7 +94,7 @@ func (s *Server) handle(conn net.Conn) {
 	w.Writer = conn
 
 	req, err_req := request.RequestFromReader(conn);
-	if (err_req != nil) {
+	if (err_req != nil && err_req.Error() != "EOF") {
 
 		fmt.Printf("Error found is %v\n", err_req);
 		h_e := HandlerError {

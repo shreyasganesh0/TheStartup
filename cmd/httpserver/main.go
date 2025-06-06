@@ -19,6 +19,7 @@ func proxyHandle(url string, w *response.Writer) {
 
 	var statuscode response.StatusCode = 200
 	resp, err := http.Get(url);
+	fmt.Printf("Url is %s", url);
 	if (err != nil) {
 
 		h_err := &server.HandlerError {
@@ -48,10 +49,6 @@ func proxyHandle(url string, w *response.Writer) {
 	for {
 
 		n, err_rd := resp.Body.Read(buf);
-		if (err_rd != nil) {
-
-			fmt.Printf("Error found while reading %v", err_rd);
-		}
 
 		if (err_rd == io.EOF) {
 
@@ -65,10 +62,14 @@ func proxyHandle(url string, w *response.Writer) {
 			}
 			break;
 		}
+		if (err_rd != nil) {
+
+			fmt.Printf("Error found while reading %v", err_rd);
+		}
 
 		if (n > 0) {
 
-			_, err_w := w.WriteChunkedBody(buf);
+			_, err_w := w.WriteChunkedBody(buf[:n]);
 			if (err_w != nil) {
 				fmt.Printf("Error found while reading %v", err_w);
 			}

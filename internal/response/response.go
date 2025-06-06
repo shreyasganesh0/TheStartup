@@ -26,7 +26,7 @@ func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
 	var err error
 	var n_tot int
 
-	n, err = fmt.Fprintf(w.Writer, "%x\r\n,", len(p));
+	n, err = fmt.Fprintf(w.Writer, "%X\r\n,", len(p));
 	if err != nil {
 
 		return n, err
@@ -98,7 +98,7 @@ func GetDefaultHeaders(contentLen int) headers.Headers {
 	h := headers.Headers{
 			"Content-Length":  v,
 			"Connection": "close",
-			"Content-Type": "text/html",
+			"Content-Type": "text/plain",
 		}
 	return h;
 }
