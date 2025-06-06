@@ -52,13 +52,10 @@ func proxyHandle(url string, w *response.Writer) {
 
 		if (err_rd == io.EOF) {
 
-			for {
-				_, errw := w.WriteChunkedBodyDone();
+			_, errw := w.WriteChunkedBodyDone();
+			if (errw != nil) {
 
-				if (errw == nil) {
-
-					break;
-				}
+				fmt.Printf("Failed to write due to %v\n", errw);
 			}
 			break;
 		}
@@ -75,6 +72,8 @@ func proxyHandle(url string, w *response.Writer) {
 			}
 		}
 	}
+
+	fmt.Printf("Done writing\n");
 }
 
 func myhandler(w *response.Writer, req *request.Request) {

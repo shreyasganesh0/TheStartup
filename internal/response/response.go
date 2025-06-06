@@ -26,12 +26,13 @@ func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
 	var err error
 	var n_tot int
 
-	n, err = fmt.Fprintf(w.Writer, "%X\r\n,", len(p));
+	n, err = fmt.Fprintf(w.Writer, "%X\r\n", len(p));
 	if err != nil {
 
 		return n, err
 	}
 	n_tot += n;
+	fmt.Printf("Writing %X\n", len(p));
 
 	n, err = w.Writer.Write(p);
 	if err != nil {
@@ -39,6 +40,7 @@ func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
 		return n_tot, err
 	}
 	n_tot += n;
+	fmt.Printf("Writing %q\n", p);
 
 	n, err = w.Writer.Write([]byte("\r\n"));
 	if err != nil {
@@ -46,6 +48,7 @@ func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
 		return n_tot, err
 	}
 	n_tot += n;
+	fmt.Printf("Writing \r\n");
 
 	return n_tot, nil;
 }
@@ -62,6 +65,7 @@ func (w *Writer) WriteChunkedBodyDone() (int, error) {
 		return n_tot, err
 	}
 	n_tot += n;
+	fmt.Printf("Writing 0\r\n\r\n");
 
 	return n_tot, nil;
 }
