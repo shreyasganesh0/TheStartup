@@ -25,14 +25,15 @@ func (w *Writer) WriteTrailers(h headers.Headers) error {
 
 	var err error
 
-	v := h["Trailers"];
+	v := h["Trailer"];
 
 	trailers := strings.Split(v, ", ");
 
-	_, err = w.Writer.Write([]byte("0\r\n"));
+//	_, err = w.Writer.Write([]byte("0\r\n"));
 	for _, vals := range trailers {
 
 		_, err = w.Writer.Write([]byte(fmt.Sprintf("%s: %s\r\n", vals, h[vals])));
+		fmt.Printf("Writing %s: %s\n", vals, h[vals]);
 	}
 	_, err = w.Writer.Write([]byte("\r\n"));
 
@@ -78,13 +79,13 @@ func (w *Writer) WriteChunkedBodyDone() (int, error) {
 	var err error
 	var n_tot int
 
-	n, err = w.Writer.Write([]byte("0\r\n\r\n"));
+	n, err = w.Writer.Write([]byte("0\r\n"));
 	if err != nil {
 
 		return n_tot, err
 	}
 	n_tot += n;
-	fmt.Printf("Writing 0\r\n\r\n");
+	fmt.Printf("Writing 0\r\n");
 
 	return n_tot, nil;
 }

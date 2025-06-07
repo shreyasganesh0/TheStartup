@@ -44,7 +44,7 @@ func proxyHandle(url string, w *response.Writer) {
 	}
 	h := response.GetDefaultHeaders(len(buf));
 	h.Update("Transfer-Encoding", "chunked");
-	h.Update("Trailers", "X-Content-SHA256, X-Content-Length");
+	h.Update("Trailer", "X-Content-Sha256, X-Content-Length");
 	h.Remove("Content-Length");
 
 	err = w.WriteHeaders(h);
@@ -64,7 +64,7 @@ func proxyHandle(url string, w *response.Writer) {
 				fmt.Printf("Failed to write due to %v\n", errw);
 			}
 
-			h.Update("X-Content-SHA256", fmt.Sprintf("%x", sha256.Sum256(x_buf.Bytes())));
+			h.Update("X-Content-Sha256", fmt.Sprintf("%x", sha256.Sum256(x_buf.Bytes())));
 			h.Update("X-Content-Length",strconv.Itoa(x_buf.Len()));
 
 			err_w := w.WriteTrailers(h);
