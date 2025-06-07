@@ -4,6 +4,7 @@ import(
 	"strconv"
 	"fmt"
 	"net"
+	"strings"
 	"github.com/shreyasganesh0/TheStartup/internal/headers"
 )
 
@@ -18,6 +19,24 @@ const (
 type Writer struct {
 
 	Writer net.Conn
+}
+
+func (w *Writer) WriteTrailers(h headers.Headers) error {
+
+	var err error
+
+	v := h["Trailers"];
+
+	trailers := strings.Split(v, ", ");
+
+	_, err = w.Writer.Write([]byte("0\r\n"));
+	for _, vals := range trailers {
+
+		_, err = w.Writer.Write([]byte(fmt.Sprintf("%s: %s\r\n", vals, h[vals])));
+	}
+	_, err = w.Writer.Write([]byte("\r\n"));
+
+	return err;
 }
 
 func (w *Writer) WriteChunkedBody(p []byte) (int, error) {

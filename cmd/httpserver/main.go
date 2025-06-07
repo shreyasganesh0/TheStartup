@@ -7,8 +7,11 @@ import(
 	"os"
 	"io"
 	"strings"
+	"bytes"
 	"fmt"
 	"net/http"
+	"strconv"
+	"crypto/sha256"
 
 	"github.com/shreyasganesh0/TheStartup/internal/server"
 	"github.com/shreyasganesh0/TheStartup/internal/request"
@@ -18,6 +21,8 @@ import(
 func proxyHandle(url string, w *response.Writer) {
 
 	var statuscode response.StatusCode = 200
+	var x_buf bytes.Buffer
+
 	resp, err := http.Get(url);
 	fmt.Printf("Url is %s", url);
 	if (err != nil) {
@@ -38,8 +43,9 @@ func proxyHandle(url string, w *response.Writer) {
 		fmt.Printf("Failed to write due to %s\n", err);
 	}
 	h := response.GetDefaultHeaders(len(buf));
-	h.Remove("Content-Length");
 	h.Update("Transfer-Encoding", "chunked");
+	h.Update("Trailers", "X-Content-SHA256, X-Content-Length");
+	h.Remove("Content-Length");
 
 	err = w.WriteHeaders(h);
 	if (err != nil) {
@@ -57,6 +63,16 @@ func proxyHandle(url string, w *response.Writer) {
 
 				fmt.Printf("Failed to write due to %v\n", errw);
 			}
+
+			h.Update("X-Content-SHA256", fmt.Sprintf("%x", sha256.Sum256(x_buf.Bytes())));
+			h.Update("X-Content-Length",strconv.Itoa(x_buf.Len()));
+
+			err_w := w.WriteTrailers(h);
+			if (err_w != nil) {
+
+				fmt.Printf("Failed to write due to %v\n", err_w);
+			}
+
 			break;
 		}
 		if (err_rd != nil) {
@@ -67,6 +83,8 @@ func proxyHandle(url string, w *response.Writer) {
 		if (n > 0) {
 
 			_, err_w := w.WriteChunkedBody(buf[:n]);
+			x_buf.Write(buf[:n]);
+
 			if (err_w != nil) {
 				fmt.Printf("Error found while reading %v", err_w);
 			}
