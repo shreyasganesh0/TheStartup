@@ -18,6 +18,27 @@ import(
 	"github.com/shreyasganesh0/TheStartup/internal/response"
 )
 
+func videoHandler(buf []byte, w *response.Writer) {
+
+	var statuscode response.StatusCode = 200
+	err := w.WriteStatusLine(statuscode);
+	if (err != nil) {
+
+		fmt.Printf("Failed to write due to %s\n", err);
+	}
+	h := response.GetDefaultHeaders(len(buf));
+	h.Update("Content-Type", "video/mp4")
+
+	err = w.WriteHeaders(h);
+	if (err != nil) {
+
+		fmt.Printf("Failed to write due to %s\n", err);
+	}
+
+	w.Writer.Write(buf);
+	return;
+}
+
 func proxyHandle(url string, w *response.Writer) {
 
 	var statuscode response.StatusCode = 200
@@ -128,7 +149,24 @@ func myhandler(w *response.Writer, req *request.Request) {
 
 	var h_err *server.HandlerError;
 
-	if (strings.HasPrefix(req.RequestLine.RequestTarget, "/httpbin")) {
+	if (req.RequestLine.RequestTarget == "/video") {
+	
+
+		b, err := os.ReadFile("assets/vim.mp4");
+		if (err != nil) {
+
+			h_err = &server.HandlerError {
+					Message: err.Error(), 
+					StatusCode: 400,
+				}
+			h_err.WriteHError(w);
+			return;
+		}
+
+		videoHandler(b, w);
+		return;
+
+	} else if (strings.HasPrefix(req.RequestLine.RequestTarget, "/httpbin")) {
 
 		url := "https://httpbin.org" + strings.TrimPrefix(req.RequestLine.RequestTarget, "/httpbin");
 		proxyHandle(url, w);
